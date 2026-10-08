@@ -1,0 +1,5 @@
+ls
+*.o
+core
+core.*
+*.tmp
