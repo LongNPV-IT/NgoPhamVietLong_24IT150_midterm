@@ -33,6 +33,8 @@ Qua bài tập, em thực hành các thao tác với hệ thống file UNIX (`op
 - **Trình biên dịch:** `cc` (GCC/Clang), chuẩn C99, cờ `-Wall -Wextra`
 - **Công cụ:** `make`, `git`
 
+<img width="863" height="377" alt="01-environment" src="https://github.com/user-attachments/assets/127eb162-6df8-4854-ab4a-4d165debaf3b" />
+
 ## 2. Biên dịch và chạy
 
 ```sh
@@ -46,6 +48,8 @@ make clean      # xóa file thực thi
 > **Lưu ý:** dùng `./ls` để chạy chương trình của project, tránh nhầm với lệnh `ls` của hệ thống.
 
 Cú pháp: `./ls [option ...] [file ...]`. Các option cần được truyền **riêng từng cái** (ví dụ `./ls -l -a`); chưa hỗ trợ gộp như `-la`.
+
+<img width="824" height="143" alt="02-build" src="https://github.com/user-attachments/assets/725b3e34-8b2a-4835-bdce-5631e6c04224" />
 
 ## 3. Cấu trúc dự án
 
@@ -124,31 +128,51 @@ Khi operand không tồn tại, không mở được thư mục hoặc option kh
 
 `./ls` liệt kê thư mục hiện tại:
 
+<img width="821" height="337" alt="03-basic-listing" src="https://github.com/user-attachments/assets/37b0efbf-3cd4-4bfe-9169-5dba0bd68a6f" />
+
 `./ls -a` / `./ls -A` hiển thị file ẩn:
+
+<img width="245" height="275" alt="04-hidden-files" src="https://github.com/user-attachments/assets/6aef2471-9290-4707-8e6b-40a24efda8c9" />
 
 ### 5.2. Định dạng danh sách dài
 
 `./ls -l` hiển thị quyền, số link, owner, group, kích thước, thời gian sửa đổi và tên file:
 
+<img width="485" height="215" alt="05-long-format" src="https://github.com/user-attachments/assets/67fa8275-893f-4f1a-8966-50c83a1d6d74" />
+
 Kích thước dễ đọc và số block (`-h`, `-k`, `-s`, `-i`):
 
+<img width="502" height="423" alt="06-size-and-blocks" src="https://github.com/user-attachments/assets/5eb7b166-a0fd-4cf1-9105-6ca4c5da06d6" />
+
 `-F` thêm ký hiệu loại file:
+
+<img width="167" height="119" alt="07-classify" src="https://github.com/user-attachments/assets/d135d31a-63f2-44ee-b904-9ed71ebde266" />
 
 ### 5.3. Sắp xếp
 
 Các kiểu sắp xếp `-S`, `-t`, `-r`, `-f`:
 
+<img width="494" height="412" alt="08-sorting" src="https://github.com/user-attachments/assets/5cbd4de0-acb8-40c2-8bbf-38aa39b7c129" />
+
 Chọn loại thời gian với `-u` và `-c`:
+
+<img width="491" height="215" alt="09-time-options" src="https://github.com/user-attachments/assets/598bc72c-d971-47ba-a51d-76f4dd242593" />
 
 ### 5.4. Thư mục, đệ quy và symbolic link
 
 `-R` liệt kê đệ quy, `-d` chỉ hiển thị chính thư mục:
 
+<img width="210" height="357" alt="10-recursive-and-d" src="https://github.com/user-attachments/assets/5d98a07a-4227-43ad-ba15-72d82cb35d55" />
+
 Symbolic link: không dùng `-d` thì đi vào thư mục đích; dùng `-d` thì hiển thị chính symlink:
+
+<img width="577" height="175" alt="11-symlink" src="https://github.com/user-attachments/assets/fbe5356b-6adc-42b6-bb59-abf92c8e94b4" />
 
 ### 5.5. Xử lý lỗi
 
 Operand không tồn tại cho thông báo lỗi và exit status `1`:
+
+<img width="317" height="135" alt="12-error-exit-status" src="https://github.com/user-attachments/assets/54401118-9c41-4221-b728-2dd8636cfd51" />
 
 ## 6. Kiểm thử
 
@@ -161,6 +185,8 @@ cat test_results.txt
 ```
 
 Các nhóm được kiểm tra: từng option riêng lẻ, tổ hợp option, quy tắc ghi đè, symbolic link, nhiều operand, option đứng sau operand, xử lý lỗi và exit status, chuyển hướng output, Setuid/Setgid, FIFO, và so sánh tham khảo với `/bin/ls` (không so sánh từng byte).
+
+<img width="706" height="526" alt="13-test-results" src="https://github.com/user-attachments/assets/090d4678-c41e-4da9-85e5-b1beedc22890" />
 
 ## 7. Hạn chế
 
@@ -180,10 +206,9 @@ Chương trình đã cài đặt các option theo manual `ls(1)` được yêu c
 
 File `.gitignore` loại trừ file thực thi `ls`, file object `.o`, core dump và file tạm `*.tmp`.
 
-<img width="959" height="563" alt="Screenshot 2026-10-09 101309" src="https://github.com/user-attachments/assets/267c9db9-b70c-403a-96df-21f79d991efc" />
+<img width="959" height="563" alt="14-github-repo" src="https://github.com/user-attachments/assets/8f4ba520-adb1-4cc9-8206-8b22b91469d6" />
 
-<img width="335" height="60" alt="Screenshot 2026-10-09 101422" src="https://github.com/user-attachments/assets/2be28320-64bc-4bb2-ba0b-790d6174fa18" />
-
+<img width="335" height="60" alt="15-commit-history" src="https://github.com/user-attachments/assets/fa3034a1-4932-411c-88dd-c5e4b6aca47a" />
 
 ## 9. Tài liệu tham khảo
 
