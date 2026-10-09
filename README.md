@@ -1,65 +1,68 @@
-# Lệnh UNIX `ls` - Phiên Bản Đơn Giản Hóa
+# ls(1) – Phiên bản đơn giản hóa bằng C
 
-Lập trình lệnh `ls(1)` của UNIX từ đầu như một bài tập giữa kỳ môn Lập trình hệ thống UNIX. Dự án được xây dựng dựa trên manual `ls(1)` của NetBSD được cung cấp trong bài tập.
+Bài tập giữa kỳ môn **Lập trình hệ thống UNIX**: cài đặt lại lệnh `ls(1)` của UNIX từ đầu bằng ngôn ngữ C, dựa trên manual page `ls(1)` của NetBSD 10.1 (27/10/2024) được cung cấp trong đề bài.
 
-Project tập trung vào các thao tác hệ thống file UNIX, xử lý command-line arguments, thông tin file và directory, symbolic link, permission, sorting và các khái niệm lập trình ở mức hệ thống.
+Qua bài tập, em thực hành các thao tác với hệ thống file UNIX (`opendir`/`readdir`, `stat`/`lstat`, `readlink`), xử lý tham số dòng lệnh, sắp xếp, định dạng đầu ra và xử lý lỗi.
 
-## Thông Tin Tác Giả
+## Thông tin
 
-- **Sinh viên:** Ngô Phạm Viết Long
-- **MSSV:** 24IT150
-- **Môn học:** Lập trình hệ thống UNIX
-- **GitHub:** [LongNPV-IT/NgoPhamVietLong_24IT150_midterm](https://github.com/LongNPV-IT/NgoPhamVietLong_24IT150_midterm)
+| | |
+|---|---|
+| **Sinh viên** | Ngô Phạm Viết Long |
+| **MSSV** | 24IT150 |
+| **Lớp / Khoa** | 24JIT / Khoa Khoa học máy tính |
+| **Giảng viên** | TS. Nguyễn Nhật Ân |
+| **Thời gian** | Tháng 10 năm 2026 |
+| **Repository** | https://github.com/LongNPV-IT/NgoPhamVietLong_24IT150_midterm |
 
-## Yêu Cầu Hệ Thống
+## Mục lục
 
-- **Hệ điều hành:** NetBSD hoặc hệ UNIX-like tương thích
-- **Compiler:** `cc`, GCC hoặc Clang hỗ trợ C99
-- **C Standard:** C99
-- **Build tool:** `make`
-- **Git:** Dùng để quản lý source code và làm việc với repository
+1. [Môi trường](#1-môi-trường)
+2. [Biên dịch và chạy](#2-biên-dịch-và-chạy)
+3. [Cấu trúc dự án](#3-cấu-trúc-dự-án)
+4. [Tính năng đã cài đặt](#4-tính-năng-đã-cài-đặt)
+5. [Minh họa kết quả](#5-minh-họa-kết-quả)
+6. [Kiểm thử](#6-kiểm-thử)
+7. [Hạn chế](#7-hạn-chế)
+8. [Kết luận](#8-kết-luận)
+9. [Tài liệu tham khảo](#9-tài-liệu-tham-khảo)
 
-Project được phát triển và kiểm thử chính trên NetBSD 10.1.
+## 1. Môi trường
 
-## Cài Đặt và Sử Dụng
+- **Hệ điều hành** phát triển và kiểm thử: NetBSD 10.1 (máy ảo)
+- **Trình biên dịch:** `cc` (GCC/Clang), chuẩn C99, cờ `-Wall -Wextra`
+- **Công cụ:** `make`, `git`
 
-Clone repository và biên dịch:
+![Thông tin môi trường](docs/images/01-environment.png)
+
+## 2. Biên dịch và chạy
 
 ```sh
 git clone https://github.com/LongNPV-IT/NgoPhamVietLong_24IT150_midterm.git
-cd NgoPhamVietLong_24IT150_midterm-main
-make
+cd NgoPhamVietLong_24IT150_midterm
+make            # biên dịch, tạo file thực thi ./ls
+./ls -l         # chạy thử
+make clean      # xóa file thực thi
 ```
 
-Chạy chương trình:
+> **Lưu ý:** dùng `./ls` để chạy chương trình của project, tránh nhầm với lệnh `ls` của hệ thống.
 
-```sh
-./ls
-./ls -l
-./ls -a
-./ls -F
-./ls -R
-```
+Cú pháp: `./ls [option ...] [file ...]`. Các option cần được truyền **riêng từng cái** (ví dụ `./ls -l -a`); chưa hỗ trợ gộp như `-la`.
 
-Xóa binary sau khi build:
+![Biên dịch bằng make](docs/images/02-build.png)
 
-```sh
-make clean
-```
-
-> Dùng `./ls` để chạy chương trình của project, tránh nhầm với lệnh `ls` của hệ thống.
-
-## Cấu Trúc Dự Án
+## 3. Cấu trúc dự án
 
 ```text
 .
 ├── README.md
 ├── Makefile
 ├── .gitignore
+├── test_full.sh          # script kiểm thử
 ├── include/
+│   ├── options.h
 │   ├── directory.h
 │   ├── fileinfo.h
-│   ├── options.h
 │   └── sorting.h
 └── src/
     ├── main.c
@@ -69,315 +72,146 @@ make clean
     └── sorting.c
 ```
 
-## Mô Tả Các Module
+| Module | Chức năng |
+|---|---|
+| `main.c` | Điểm vào chương trình: khởi tạo `Options`, phân tích tham số, phân loại operand (file/directory), in tiêu đề thư mục khi có nhiều operand, trả về exit status. |
+| `options.c` / `options.h` | Định nghĩa cấu trúc `Options` và hàm `parse_options`. Xử lý các option ghi đè nhau (`-l`/`-n`, `-c`/`-u`, `-q`/`-w`, `-R`/`-d`, `-h`/`-k`). |
+| `directory.c` / `directory.h` | Mở và đọc thư mục, lọc file ẩn theo `-a`/`-A`, thu thập entry, sắp xếp, in kết quả; hỗ trợ đệ quy `-R`. |
+| `fileinfo.c` / `fileinfo.h` | Lấy thông tin file bằng `stat`/`lstat`, định dạng chuỗi quyền (`rwx`, `s`/`S`, `t`/`T`), owner/group, kích thước (`-h`, `-k`), thời gian, symbolic link, ký hiệu `-F`, in long format. |
+| `sorting.c` / `sorting.h` | Sắp xếp theo tên (mặc định), kích thước (`-S`), thời gian (`-t`), đảo ngược (`-r`), không sắp xếp (`-f`). |
 
-### `main.c`
+## 4. Tính năng đã cài đặt
 
-Điểm bắt đầu của chương trình. Khởi tạo cấu hình, phân tích options và operands, điều phối xử lý file/directory và xử lý exit status.
+Hỗ trợ đầy đủ các option trong manual được cung cấp:
 
-### `options.c`
+| Option | Chức năng |
+|:---:|---|
+| `-A` | Liệt kê mọi entry trừ `.` và `..` |
+| `-a` | Bao gồm các entry bắt đầu bằng dấu chấm |
+| `-c` | Dùng thời gian thay đổi trạng thái (ctime) để sắp xếp (`-t`) hoặc in (`-l`) |
+| `-d` | Liệt kê thư mục như file thường, không đi vào bên trong; không đi theo symbolic link ở operand |
+| `-F` | Thêm ký hiệu sau tên: `/` thư mục, `*` thực thi, `@` symlink, `\|` FIFO |
+| `-f` | Không sắp xếp |
+| `-h` | Hiển thị kích thước dạng dễ đọc (K, M, G, …) |
+| `-i` | In số inode |
+| `-k` | Hiển thị kích thước theo kilobyte |
+| `-l` | Định dạng danh sách dài |
+| `-n` | Như `-l` nhưng hiển thị UID/GID dạng số |
+| `-q` | In ký tự không in được trong tên file thành `?` |
+| `-R` | Liệt kê đệ quy các thư mục con |
+| `-r` | Đảo ngược thứ tự sắp xếp |
+| `-S` | Sắp xếp theo kích thước, file lớn nhất trước |
+| `-s` | Hiển thị số block của mỗi file (có dòng `total` khi xuất ra terminal) |
+| `-t` | Sắp xếp theo thời gian sửa đổi, mới nhất trước |
+| `-u` | Dùng thời gian truy cập (atime) |
+| `-w` | In thô ký tự không in được |
 
-Phân tích command-line options và lưu trạng thái các option trong cấu trúc `Options`.
+### Quy tắc ghi đè giữa các option
 
-### `directory.c`
+Theo manual, với các cặp sau, option xuất hiện **sau cùng** được áp dụng:
 
-Mở và đọc directory, lọc entries, lấy thông tin file, sắp xếp và in nội dung; hỗ trợ recursive listing với `-R`.
+| Cặp option | Ý nghĩa |
+|---|---|
+| `-l` / `-n` | Hiển thị tên hay UID/GID dạng số |
+| `-c` / `-u` | Loại thời gian được dùng |
+| `-q` / `-w` | Cách in ký tự không in được |
+| `-R` / `-d` | Đệ quy hay coi thư mục như file |
+| `-h` / `-k` | Đơn vị hiển thị kích thước |
 
-### `fileinfo.c`
+### Xử lý lỗi và exit status
 
-Xử lý thông tin filesystem như file type, permission, owner, group, file size, inode, link count, timestamps, symbolic link và file type suffix.
+Khi operand không tồn tại, không mở được thư mục hoặc option không hợp lệ, chương trình in thông báo lỗi và trả về exit status `1`; chạy thành công trả về `0`.
 
-### `sorting.c`
+## 5. Minh họa kết quả
 
-Sắp xếp directory entries theo tên, kích thước hoặc thời gian; hỗ trợ đảo ngược thứ tự.
+### 5.1. Liệt kê cơ bản
 
-## Các Tính Năng Đã Cài Đặt
+`./ls` liệt kê thư mục hiện tại:
 
-Bản cài đặt hỗ trợ các tùy chọn trong phạm vi manual `ls(1)` được cung cấp:
+![Liệt kê cơ bản](docs/images/03-basic-listing.png)
 
-| Option | Chức năng                                                |
-| ------ | -------------------------------------------------------- |
-| `-A`   | Liệt kê mọi entry trừ `.` và `..`                        |
-| `-a`   | Bao gồm các entry bắt đầu bằng `.`                       |
-| `-c`   | Sử dụng change time (`ctime`)                            |
-| `-d`   | Hiển thị directory như một file thay vì liệt kê nội dung |
-| `-F`   | Thêm ký hiệu phân biệt loại file                         |
-| `-f`   | Không sắp xếp kết quả                                    |
-| `-h`   | Hiển thị kích thước theo dạng dễ đọc                     |
-| `-i`   | Hiển thị số inode                                        |
-| `-k`   | Hiển thị kích thước theo kilobyte                        |
-| `-l`   | Hiển thị thông tin ở long format                         |
-| `-n`   | Như `-l` nhưng hiển thị UID/GID dạng số                  |
-| `-q`   | Thay ký tự không in được bằng `?`                        |
-| `-R`   | Liệt kê directory theo kiểu đệ quy                       |
-| `-r`   | Đảo ngược thứ tự sắp xếp                                 |
-| `-S`   | Sắp xếp theo kích thước                                  |
-| `-s`   | Hiển thị số filesystem blocks                            |
-| `-t`   | Sắp xếp theo thời gian                                   |
-| `-u`   | Sử dụng access time (`atime`)                            |
-| `-w`   | Hiển thị tên file ở dạng raw                             |
+`./ls -a` / `./ls -A` hiển thị file ẩn:
 
-### Ký Hiệu Loại File
+![File ẩn](docs/images/04-hidden-files.png)
 
-Option `-F` thêm ký hiệu sau tên file theo loại file:
+### 5.2. Định dạng danh sách dài
 
-| Ký hiệu | Loại file       |
-| ------- | --------------- |
-| `/`     | Directory       |
-| `*`     | Executable file |
-| `@`     | Symbolic link   |
-| `\|`    | FIFO            |
+`./ls -l` hiển thị quyền, số link, owner, group, kích thước, thời gian sửa đổi và tên file:
 
-Ví dụ:
+![Long format](docs/images/05-long-format.png)
 
-```sh
-./ls -F
-```
+Kích thước dễ đọc và số block (`-h`, `-k`, `-s`, `-i`):
 
-## Build
+![Kích thước và block](docs/images/06-size-and-blocks.png)
 
-Makefile sử dụng `cc` với các tùy chọn:
+`-F` thêm ký hiệu loại file:
 
-```make
-CC = cc
-CFLAGS = -Wall -Wextra -std=c99
-CPPFLAGS = -Iinclude
-```
+![Ký hiệu loại file](docs/images/07-classify.png)
 
-Biên dịch và xóa binary:
+### 5.3. Sắp xếp
 
-```sh
-make
-make clean
-```
+Các kiểu sắp xếp `-S`, `-t`, `-r`, `-f`:
 
-Binary sau khi build là `./ls`.
+![Sắp xếp](docs/images/08-sorting.png)
 
-## Cách Sử Dụng
+Chọn loại thời gian với `-u` và `-c`:
 
-### Cú Pháp Cơ Bản
+![Loại thời gian](docs/images/09-time-options.png)
 
-```sh
-./ls
-./ls src
-./ls include
-./ls Makefile
-./ls README.md
-./ls Makefile README.md
-./ls src include
-```
+### 5.4. Thư mục, đệ quy và symbolic link
 
-Có thể truyền nhiều file và directory làm operands:
+`-R` liệt kê đệ quy, `-d` chỉ hiển thị chính thư mục:
 
-```sh
-./ls Makefile src
-./ls Makefile src include README.md
-```
+![Đệ quy và -d](docs/images/10-recursive-and-d.png)
 
-Khi operand là directory, chương trình liệt kê nội dung của directory.
+Symbolic link: không dùng `-d` thì đi vào thư mục đích; dùng `-d` thì hiển thị chính symlink:
 
-### Ví Dụ Theo Tùy Chọn
+![Symbolic link](docs/images/11-symlink.png)
 
-Long format:
+### 5.5. Xử lý lỗi
+
+Operand không tồn tại cho thông báo lỗi và exit status `1`:
+
+![Lỗi và exit status](docs/images/12-error-exit-status.png)
+
+## 6. Kiểm thử
+
+`test_full.sh` là bộ kiểm thử hồi quy. Script tự build nếu chưa có `./ls`, tạo dữ liệu kiểm thử tạm (tự dọn khi kết thúc), đếm số test Passed/Failed và trả về exit status khác `0` nếu có test thất bại.
 
 ```sh
-./ls -l
-```
-
-Long format hiển thị permission, link count, owner, group, file size, timestamp và file name.
-
-Hiển thị file ẩn, inode hoặc kích thước:
-
-```sh
-./ls -a
-./ls -A
-./ls -i
-./ls -h
-./ls -l -h
-./ls -k
-./ls -l -k
-```
-
-Hiển thị directory như file, liệt kê đệ quy hoặc thay đổi thứ tự:
-
-```sh
-./ls -d src
-./ls -R
-./ls -R src
-./ls -S
-./ls -S -r
-./ls -t
-./ls -t -r
-./ls -f
-./ls -r
-```
-
-Sử dụng thời gian truy cập hoặc change time:
-
-```sh
-./ls -l -u
-./ls -l -c
-```
-
-Hiển thị filesystem blocks:
-
-```sh
-./ls -s
-./ls -s > output.txt
-```
-
-Khi output trực tiếp ra terminal, `-s` hiển thị thêm dòng `total`. Khi redirect output, dòng `total` không được in vào file.
-
-### Symbolic Link, Permission Đặc Biệt và FIFO
-
-Tạo symbolic link và xem ký hiệu loại file:
-
-```sh
-ln -s README.md readme-link
-ln -s include include-link
-./ls -F
-```
-
-Khi chạy `./ls readme-link`, chương trình hiển thị symbolic link. Khi chạy `./ls include-link`, chương trình xử lý target directory của symbolic link. Dùng `-d` để hiển thị chính symbolic link:
-
-```sh
-./ls -d include-link
-```
-
-Chương trình xử lý các permission bit đặc biệt như Setuid và Setgid:
-
-```sh
-chmod 4755 special-test
-./ls -l special-test
-
-chmod 2755 special-test
-./ls -l special-test
-```
-
-Tạo và kiểm tra FIFO:
-
-```sh
-mkfifo test-fifo
-./ls -l test-fifo
-./ls -F test-fifo
-```
-
-### Options Sau Operand và Option Separator
-
-Project hỗ trợ options xuất hiện sau operand:
-
-```sh
-./ls include-link -F
-./ls -d include-link -F
-```
-
-`--` đánh dấu kết thúc phần options; các argument phía sau được xử lý như operands:
-
-```sh
-./ls -- src
-```
-
-### Thứ Tự Ưu Tiên Của Options
-
-Với một số option có hành vi ghi đè lẫn nhau, option xuất hiện sau cùng được áp dụng:
-
-| Options           | Hành vi                                                     |
-| ----------------- | ----------------------------------------------------------- |
-| `-l -n` / `-n -l` | Option sau cùng quyết định hiển thị tên hay UID/GID dạng số |
-| `-c -u` / `-u -c` | Option thời gian xuất hiện sau cùng được áp dụng            |
-| `-q -w` / `-w -q` | Option xuất hiện sau cùng được áp dụng                      |
-| `-R -d` / `-d -R` | Option xuất hiện sau cùng được áp dụng                      |
-
-## Chi Tiết Cài Đặt
-
-### Đọc Directory
-
-Quy trình xử lý directory gồm mở directory, đọc từng entry, kiểm tra file ẩn, lấy thông tin filesystem, lưu và sắp xếp entries, sau đó hiển thị kết quả.
-
-### Lấy Thông Tin File
-
-Chương trình lấy thông tin file type, permission, link count, UID, GID, file size, modification time, change time, access time, inode và filesystem blocks. `lstat()` được sử dụng khi cần thông tin của chính symbolic link thay vì target.
-
-### Sắp Xếp và Định Dạng
-
-Các chế độ sắp xếp được hỗ trợ gồm theo tên, kích thước (`-S`), thời gian (`-t`), đảo ngược (`-r`) và không sắp xếp (`-f`). Permission được chuyển từ mode bits sang dạng như `-rwxr-xr-x`; các bit Setuid, Setgid và Sticky được thể hiện bằng `s`, `St` hoặc `T` tùy trường hợp. Với `-h`, kích thước được chuyển sang dạng dễ đọc, ví dụ `30568 bytes` có thể hiển thị thành `29.9K`.
-
-## Xử Lý Lỗi
-
-Chương trình xử lý một số lỗi phổ biến như file hoặc directory không tồn tại, không thể mở directory, option không hợp lệ và không thể lấy filesystem information.
-
-Ví dụ khi operand không tồn tại:
-
-```sh
-./ls not-exist
-echo $?
-```
-
-Tài liệu dự án ghi nhận exit status là `1` trong trường hợp lỗi và `0` khi chạy thành công.
-
-## Kiểm Thử
-
-Project có script `test_full.sh` để chạy bộ regression test trên NetBSD hoặc môi trường UNIX tương thích. Script tự build chương trình bằng `make` nếu chưa có executable `./ls`, tạo fixtures tạm để kiểm thử và tự dọn chúng khi kết thúc.
-
-Chạy script từ thư mục gốc của project:
-
-```sh
-cd /home/npvlong/ls-midterm
 chmod +x test_full.sh
-./test_full.sh
-```
-
-Để lưu cả output chuẩn và lỗi vào file rồi xem kết quả:
-
-```sh
 ./test_full.sh > test_results.txt 2>&1
 cat test_results.txt
 ```
 
-Script in số test Passed/Failed/Total và trả về exit status khác `0` nếu có test thất bại. So sánh output với `/bin/ls` chỉ mang tính tham khảo, không phải so sánh byte-for-byte.
+Các nhóm được kiểm tra: từng option riêng lẻ, tổ hợp option, quy tắc ghi đè, symbolic link, nhiều operand, option đứng sau operand, xử lý lỗi và exit status, chuyển hướng output, Setuid/Setgid, FIFO, và so sánh tham khảo với `/bin/ls` (không so sánh từng byte).
 
-Các nhóm chức năng được kiểm tra gồm:
+![Kết quả test](docs/images/13-test-results.png)
 
-- Basic listing và các options `-a`, `-A`, `-d`, `-F`, `-i`, `-l`, `-n`, `-h`, `-k`, `-s`, `-f`, `-r`, `-S`, `-t`, `-c`, `-u`, `-q`, `-w`, `-R`
-- Symbolic links và multiple operands
-- Options sau operands và `--`
-- Error handling, exit status và output redirection
-- Setuid, Setgid và FIFO
-- Các tổ hợp options riêng lẻ, precedence, fixture/edge cases và so sánh tham khảo với `/bin/ls`
+## 7. Hạn chế
 
-Build cuối cùng được kiểm tra bằng cách chạy `make clean`, `make` và các lệnh `./ls`, `./ls -l`, `./ls -F`, `./ls -R`; tài liệu ghi nhận không có compiler warning hoặc error.
+- Chỉ cài đặt các option trong phạm vi manual được cung cấp; không có màu sắc hay option mở rộng của GNU `ls`.
+- Option phải được truyền riêng từng cái (`./ls -l -a`); chưa hỗ trợ gộp như `-la`.
+- Sau `--`, operand bắt đầu bằng dấu `-` chưa được xử lý như tên file.
+- Ký hiệu whiteout (`%`) và socket (`=`) của `-F` chưa được cài đặt/kiểm thử đầy đủ.
+- Chưa kiểm thử mọi loại filesystem đặc biệt của NetBSD.
+- Project được kiểm thử trên NetBSD 10.1; trên hệ khác (ví dụ Linux với `-std=c99` nghiêm ngặt) có thể cần thêm cờ biên dịch.
+- Output không đảm bảo giống từng byte với `ls` của hệ thống.
 
-## Hạn Chế
+## 8. Kết luận
 
-Đây là phiên bản simplified `ls(1)` phục vụ mục đích học tập và phạm vi bài Midterm, không nhằm thay thế hoàn toàn lệnh `ls` của hệ điều hành.
+Chương trình đã cài đặt các option theo manual `ls(1)` được yêu cầu, tổ chức thành nhiều module `.c`/`.h` rõ ràng, có Makefile, script kiểm thử và được lưu trữ trên GitHub. Qua bài tập, em hiểu rõ hơn về các system call thao tác file, cách tổ chức chương trình C nhiều file và cách kiểm thử một công cụ dòng lệnh.
 
-- Chỉ triển khai tập options trong phạm vi manual được cung cấp.
-- Không đảm bảo tương thích hoàn toàn với mọi hành vi của `ls` phiên bản hệ thống.
-- Chưa kiểm thử đầy đủ tất cả filesystem đặc biệt của NetBSD.
-- Whiteout (`%`) chưa được kiểm thử đầy đủ; socket (`=`) chưa được kiểm thử riêng trong bộ test hiện tại.
-- Không triển khai các chức năng ngoài phạm vi manual như màu sắc output hoặc options mở rộng riêng của GNU `ls`.
-- Đây không phải implementation production-level; một số cú pháp command-line nâng cao có thể khác với `ls` hệ thống.
+### Quản lý mã nguồn
 
-## Git và GitHub
+File `.gitignore` loại trừ file thực thi `ls`, file object `.o`, core dump và file tạm `*.tmp`.
 
-Binary `ls`, object files `.o` và các file test tạm thời như symbolic link, FIFO, test output không thuộc source chính thức của project và không được commit.
+![Trang GitHub](docs/images/14-github-repo.png)
 
-```sh
-git status
-git add Makefile README.md .gitignore src include
-git commit -m "Complete ls midterm project"
-git push
-```
+![Lịch sử commit](docs/images/15-commit-history.png)
 
-## Giấy Phép
+## 9. Tài liệu tham khảo
 
-Tài liệu nguồn xác định đây là project giáo dục cho môn Lập trình hệ thống
-
-## Tài Liệu Tham Khảo
-
-- Manual `ls(1)` của NetBSD được cung cấp trong bài tập
-- Tài liệu môn học Lập trình hệ thống UNIX
-- Tài liệu về UNIX filesystem và system programming
-- Tài liệu C Standard Library và POSIX/UNIX system interfaces
-
-Cập nhật lần cuối: Tháng 10 năm 2026.
+- Manual page `ls(1)`, NetBSD 10.1 (27/10/2024), được cung cấp trong đề bài.
+- Tài liệu môn học Lập trình hệ thống UNIX.
+- Manual các hàm: `stat(2)`, `opendir(3)`, `readdir(3)`, `readlink(2)`, `strftime(3)`.
