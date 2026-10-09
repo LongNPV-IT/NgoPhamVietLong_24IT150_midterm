@@ -27,7 +27,7 @@ Clone repository và biên dịch:
 
 ```sh
 git clone https://github.com/LongNPV-IT/NgoPhamVietLong_24IT150_midterm.git
-cd /home/npvlong/ls-midterm
+cd NgoPhamVietLong_24IT150_midterm-main
 make
 ```
 
