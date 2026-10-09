@@ -33,8 +33,6 @@ Qua bài tập, em thực hành các thao tác với hệ thống file UNIX (`op
 - **Trình biên dịch:** `cc` (GCC/Clang), chuẩn C99, cờ `-Wall -Wextra`
 - **Công cụ:** `make`, `git`
 
-![Thông tin môi trường](docs/images/01-environment.png)
-
 ## 2. Biên dịch và chạy
 
 ```sh
@@ -48,8 +46,6 @@ make clean      # xóa file thực thi
 > **Lưu ý:** dùng `./ls` để chạy chương trình của project, tránh nhầm với lệnh `ls` của hệ thống.
 
 Cú pháp: `./ls [option ...] [file ...]`. Các option cần được truyền **riêng từng cái** (ví dụ `./ls -l -a`); chưa hỗ trợ gộp như `-la`.
-
-![Biên dịch bằng make](docs/images/02-build.png)
 
 ## 3. Cấu trúc dự án
 
@@ -128,51 +124,31 @@ Khi operand không tồn tại, không mở được thư mục hoặc option kh
 
 `./ls` liệt kê thư mục hiện tại:
 
-![Liệt kê cơ bản](docs/images/03-basic-listing.png)
-
 `./ls -a` / `./ls -A` hiển thị file ẩn:
-
-![File ẩn](docs/images/04-hidden-files.png)
 
 ### 5.2. Định dạng danh sách dài
 
 `./ls -l` hiển thị quyền, số link, owner, group, kích thước, thời gian sửa đổi và tên file:
 
-![Long format](docs/images/05-long-format.png)
-
 Kích thước dễ đọc và số block (`-h`, `-k`, `-s`, `-i`):
 
-![Kích thước và block](docs/images/06-size-and-blocks.png)
-
 `-F` thêm ký hiệu loại file:
-
-![Ký hiệu loại file](docs/images/07-classify.png)
 
 ### 5.3. Sắp xếp
 
 Các kiểu sắp xếp `-S`, `-t`, `-r`, `-f`:
 
-![Sắp xếp](docs/images/08-sorting.png)
-
 Chọn loại thời gian với `-u` và `-c`:
-
-![Loại thời gian](docs/images/09-time-options.png)
 
 ### 5.4. Thư mục, đệ quy và symbolic link
 
 `-R` liệt kê đệ quy, `-d` chỉ hiển thị chính thư mục:
 
-![Đệ quy và -d](docs/images/10-recursive-and-d.png)
-
 Symbolic link: không dùng `-d` thì đi vào thư mục đích; dùng `-d` thì hiển thị chính symlink:
-
-![Symbolic link](docs/images/11-symlink.png)
 
 ### 5.5. Xử lý lỗi
 
 Operand không tồn tại cho thông báo lỗi và exit status `1`:
-
-![Lỗi và exit status](docs/images/12-error-exit-status.png)
 
 ## 6. Kiểm thử
 
@@ -185,8 +161,6 @@ cat test_results.txt
 ```
 
 Các nhóm được kiểm tra: từng option riêng lẻ, tổ hợp option, quy tắc ghi đè, symbolic link, nhiều operand, option đứng sau operand, xử lý lỗi và exit status, chuyển hướng output, Setuid/Setgid, FIFO, và so sánh tham khảo với `/bin/ls` (không so sánh từng byte).
-
-![Kết quả test](docs/images/13-test-results.png)
 
 ## 7. Hạn chế
 
@@ -206,9 +180,10 @@ Chương trình đã cài đặt các option theo manual `ls(1)` được yêu c
 
 File `.gitignore` loại trừ file thực thi `ls`, file object `.o`, core dump và file tạm `*.tmp`.
 
-![Trang GitHub](docs/images/14-github-repo.png)
+<img width="959" height="563" alt="Screenshot 2026-10-09 101309" src="https://github.com/user-attachments/assets/267c9db9-b70c-403a-96df-21f79d991efc" />
 
-![Lịch sử commit](docs/images/15-commit-history.png)
+<img width="335" height="60" alt="Screenshot 2026-10-09 101422" src="https://github.com/user-attachments/assets/2be28320-64bc-4bb2-ba0b-790d6174fa18" />
+
 
 ## 9. Tài liệu tham khảo
 
